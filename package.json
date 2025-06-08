@@ -9,15 +9,32 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "expo": "~53.0.10",
-    "expo-status-bar": "~2.2.3",
-    "react": "19.0.0",
-    "react-native": "0.79.3"
+    "@expo/webpack-config": "^19.0.1",
+    "@react-native-async-storage/async-storage": "1.21.0",
+    "@react-native-picker/picker": "^2.11.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.1",
+    "expo": "^50.0.21",
+    "expo-media-library": "~15.9.2",
+    "expo-status-bar": "~1.11.1",
+    "html2canvas": "^1.4.1",
+    "prop-types": "^15.8.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-native": "0.73.6",
+    "react-native-picker-select": "^9.3.1",
+    "react-native-reanimated": "~3.6.2",
+    "react-native-view-shot": "3.8.0",
+    "react-native-web": "~0.19.6",
+    "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
-    "typescript": "~5.8.3"
+    "@types/react": "~18.2.45",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "typescript": "~5.8.3",
+    "vm-browserify": "^1.1.2"
   },
   "private": true
 }
