@@ -154,12 +154,11 @@ export default function App() {
         <View style={styles.topButtonsContainer}>
           <View style={styles.pickerContainer}>
             <View style={styles.nativePickerWrapper}>
-              <View style={styles.pickerChevron} />
               <Picker
                 selectedValue={selectedTag}
                 onValueChange={setSelectedTag}
                 style={styles.nativePicker}
-                dropdownIconColor="#fff"
+                dropdownIconColor="#000000"
               >
                 {TAGS.map(tag => (
                   <Picker.Item
@@ -268,37 +267,22 @@ const styles = StyleSheet.create({
   },
   nativePickerWrapper: {
     borderRadius: 8,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(0,0,0,0.2)',
     overflow: 'hidden',
     height: 44,
     justifyContent: 'center',
     position: 'relative',
   },
   nativePicker: {
-    color: '#fff',
+    color: '#000000',
     height: 44,
     fontSize: 14,
     fontWeight: '600',
     width: '100%',
     paddingLeft: 8,
     paddingRight: 32,
-  },
-  pickerChevron: {
-    position: 'absolute',
-    right: 12,
-    top: '50%',
-    transform: [{ translateY: -6 }],
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#ffffff',
-    zIndex: 1,
   },
   button: {
     flex: 1,
