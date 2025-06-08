@@ -33,17 +33,70 @@ interface Quote {
 }
 
 export default function App() {
-  const [imageUrl, setImageUrl] = useState('https://picsum.photos/1080/1920');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState('technology');
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const viewShotRef = useRef<ViewShot>(null);
   const exportWrapperRef = useRef<HTMLDivElement>(null);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [cachedImageData, setCachedImageData] = useState<string | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
-  const generateNewImage = () => {
-    setImageUrl(`https://picsum.photos/1080/1920?random=${Date.now()}`);
+  const cacheImage = async (url: string) => {
+    try {
+      if (Platform.OS === 'web') {
+        // For web, convert image to data URL
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        return new Promise<string>((resolve) => {
+          reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            setCachedImageData(dataUrl);
+            resolve(dataUrl);
+          };
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        // For native, use FileSystem
+        const filename = url.split('/').pop() || 'image.jpg';
+        const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+        
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (fileInfo.exists) {
+          setCachedImageData(fileUri);
+          return fileUri;
+        }
+
+        const downloadResult = await FileSystem.downloadAsync(url, fileUri);
+        setCachedImageData(downloadResult.uri);
+        return downloadResult.uri;
+      }
+    } catch (error) {
+      console.error('Error caching image:', error);
+      return url;
+    }
   };
+
+  const generateNewImage = async () => {
+    setIsImageLoaded(false);
+    const newUrl = 'https://picsum.photos/1080/1920';
+    await cacheImage(newUrl);
+    setImageUrl(newUrl);
+  };
+
+  // Initialize with cached image
+  useEffect(() => {
+    const initializeImage = async () => {
+      const initialUrl = 'https://picsum.photos/1080/1920';
+      await cacheImage(initialUrl);
+      setImageUrl(initialUrl);
+    };
+    initializeImage();
+  }, []);
 
   const fetchQuote = async (tag: string) => {
     setIsLoading(true);
@@ -62,28 +115,31 @@ export default function App() {
   }, [selectedTag]);
 
   const handleExport = async () => {
-    if (!viewShotRef.current || !exportWrapperRef.current) return;
+    if (!viewShotRef.current) return;
     
     setIsExporting(true);
     try {
       if (Platform.OS === 'web') {
-        // For web, we'll use the wrapper div
+        if (!exportWrapperRef.current) return;
         const element = exportWrapperRef.current;
         
-        // Add a small delay to ensure rendering is complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         const canvas = await html2canvas(element, {
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#000000',
-          logging: true, // Enable logging for debugging
-          scale: window.devicePixelRatio, // Ensure proper scaling
+          logging: true,
+          scale: window.devicePixelRatio,
           width: element.offsetWidth,
           height: element.offsetHeight,
+          imageTimeout: 0,
+          onclone: (clonedDoc) => {
+            const img = clonedDoc.querySelector('img');
+            if (img && cachedImageData) {
+              img.src = cachedImageData;
+            }
+          }
         });
         
-        // Convert to blob and download
         canvas.toBlob((blob) => {
           if (!blob) {
             throw new Error('Failed to create blob');
@@ -98,11 +154,14 @@ export default function App() {
           URL.revokeObjectURL(url);
         }, 'image/png', 1.0);
       } else {
-        // Native export using MediaLibrary
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== 'granted') {
           alert('Sorry, we need camera roll permissions to save the image!');
           return;
+        }
+
+        if (!isImageLoaded) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         const uri = await viewShotRef.current.capture?.();
@@ -133,10 +192,14 @@ export default function App() {
           }}
           data-testid="view-shot"
         >
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.backgroundImage}
-          />
+          {cachedImageData && (
+            <Image
+              source={{ uri: cachedImageData }}
+              style={styles.backgroundImage}
+              onLoad={() => setIsImageLoaded(true)}
+              onLoadStart={() => setIsImageLoaded(false)}
+            />
+          )}
           <View style={styles.quoteContainer}>
             {isLoading ? (
               <ActivityIndicator size="large" color="#ffffff" />
